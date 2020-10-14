@@ -1,53 +1,41 @@
 class Api::V1::CitationsController < Api::V1::BaseController
-  before_action :skip_policy_scope, :skip_authorization
+  before_action :skip_policy_scope, :skip_authorization, :set_before_variables
+  PAGE_SIZE = 30
 
   def index
-    page                      = ( params[ :page ] || 1 ).to_i
-    page_size                 = 1000
-    offset                    = page_size * ( page - 1 )
-    query                     = params[ :q ]
+    project = params[:project_id] ? Project.find(params[:project_id]) : nil
+    @citations = project ? project.citations : Citation
+    @citations = @citations.includes({ authors_citations: [:author, :ordering] }, :journal, :keywords)
+    @citations = @citations.by_query(@query)
+    @citation_project_dict = project ?
+      Hash[
+        *project.
+          citations_projects.
+          where(citation: @citations).
+          map { | c_p | [ c_p.citation_id,  c_p.id ] }.
+          flatten
+      ] :
+      {}
 
-    @citation_project_dict    = { }
-    @total_count              = 0
-    @citations                = [ ]
-    @more                     = false
-
-    if params[ :project_id ].present?
-      project                 = Project.find( params[ :project_id ] )
-      if query
-        total_arr             = project.citations.by_query( query )
-                                    .order( pmid: :desc )
-                                    .includes( { authors_citations: [:author, :ordering] }, :journal, :keywords )
-      else
-        total_arr             = project.citations
-                                    .order( pmid: :desc )
-                                    .includes( { authors_citations: [:author, :ordering] }, :journal, :keywords )
-      end
-      citations_projects      = project.citations_projects.where( citation: total_arr )
-      @total_count            = citations_projects.length
-      @citation_project_dict  = Hash[ *citations_projects.map { | c_p | [ c_p.citation_id,  c_p.id ] }.flatten ]
-      @citations              = total_arr[ offset .. offset + page_size - 1 ]
-      @more                   = offset + @citations.length < @total_count
-    else
-      if query
-        citations             = Citation.by_query( query )
-      else
-        citations             = Citation.all
-      end
-      @total_count            = citations.length
-      @citations              = citations[ offset .. offset + page_size - 1 ]
-      @more                   = offset + @citations.length < total_arr.length
-    end
+    set_common_variables
   end
 
   def titles
-    page                      = (params[ :page ] || 1).to_i
-    query                     = params[ :q ] || ''
-    page_size = 30
-    offset                    = page_size * ( page - 1 )
-    total_arr                 = Citation.by_query( query )
-    @total_count              = total_arr.length
-    @citations                = total_arr[ offset .. offset + page_size - 1 ]
-    @more                     = offset + @citations.length < @total_count
+    @citations = Citation.by_query(@query)
+    set_common_variables
   end
+
+  private
+
+    def set_before_variables
+      @page = params[:page].to_i || 1
+      @query = params[:q] || ''
+    end
+
+    def set_common_variables
+      @citations = Kaminari.paginate_array(@citations) if @citations.class == Array
+      @citations = @citations.page(@page).per(PAGE_SIZE)
+      @total_count = @citations.total_count
+      @more = !@citations.last_page?
+    end
 end

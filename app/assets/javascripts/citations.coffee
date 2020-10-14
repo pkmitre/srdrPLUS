@@ -7,7 +7,7 @@ document.addEventListener 'turbolinks:load', ->
     ##### ONLY RUN THIS CODE IF WE ARE IN INDEX CITATIONS PAGE
     if $( 'body.citations.index' ).length == 0
       return
-      
+
     $( '#delete-citations-select-all' ).change ( e )->
       e.preventDefault()
       if $( this ).prop('checked')
@@ -40,7 +40,7 @@ document.addEventListener 'turbolinks:load', ->
           pubmed_type_id = $( "#dropzone-div input#pubmed-file-type-id" ).val()
 
           file_extension = file.name.split('.').pop()
-          file_type_id = switch 
+          file_type_id = switch
             when file_extension == 'ris' then ris_type_id
             when file_extension == 'csv' then csv_type_id
             when file_extension == 'enw' then endnote_type_id
@@ -327,6 +327,12 @@ document.addEventListener 'turbolinks:load', ->
       #$( '.add-authors-citation' ).on 'click', () ->
 
       $( '#citations' ).attr( 'listeners-exist', 'true' )
+
+      $('.noEnterSubmit').keypress (e) ->
+        if e.which == 13
+          e.preventDefault()
+          return false
+
     return  # END do ->
 
   return  # END document.addEventListener 'turbolinks:load', ->
