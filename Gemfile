@@ -191,3 +191,5 @@ gem 'newrelic-infinite_tracing'
 gem 'rack-attack'
 
 gem 'rack-mini-profiler'
+
+gem 'webpacker', '~> 5.x'
