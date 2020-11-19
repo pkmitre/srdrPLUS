@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "@rails/webpacker": "5.2.1"
+    "@rails/webpacker": "5.2.1",
+    "svelte": "^3.29.7",
+    "svelte-loader": "^2.13.6"
   },
   "devDependencies": {
     "webpack-dev-server": "^3.11.0"
